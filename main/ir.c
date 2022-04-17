@@ -1,5 +1,6 @@
 #include "ir.h"
-
+static rmt_channel_t example_tx_channel = RMT_CHANNEL_0;
+static rmt_channel_t example_rx_channel = RMT_CHANNEL_2;
 char *command_to_json(rmt_item32_t *data, size_t length)
 {
   cJSON *obj = NULL;
@@ -38,4 +39,8 @@ void json_to_command(char *str, rmt_item32_t **data)
     i++;
   }
   cJSON_free(obj);
+}
+
+ir_tx_config()
+{
 }
