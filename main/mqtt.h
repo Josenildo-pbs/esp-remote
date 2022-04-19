@@ -24,17 +24,18 @@
 #include "mqtt_client.h"
 #include "event.h"
 
-#define BROKER_URL "mqtt://plataforma.connecton.com.br"
-#define BROKER_USER "api"
-#define BROKER_PASS "apilocal"
+#define BROKER_URL "mqtt://mqtt.eclipseprojects.io"
+#define BROKER_USER "1234"
+#define BROKER_PASS "1234"
 
 typedef struct
 {
   char topic[100];
   char msg[100];
 } mqtt_data_t;
-QueueHandle_t mqtt_queue;
 
+QueueHandle_t mqtt_queue;
+esp_mqtt_client_handle_t client;
 void mqtt_init(void);
 
 #endif

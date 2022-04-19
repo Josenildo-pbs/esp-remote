@@ -4,14 +4,25 @@
 #include <stdio.h>
 
 static const char *TAG = "MAIN";
-
+#define CMP(b) (strcmp(data.topic, b) == 0)
 void mqtt_rx(void *params)
 {
   mqtt_data_t data;
+  uint8_t send;
   for (;;)
   {
     xQueueReceive(mqtt_queue, &data, portMAX_DELAY);
     ESP_LOGI(TAG, "topic: %s - msg: %s", data.topic, data.msg);
+    if (CMP("/send"))
+    {
+      send = atoi(data.msg);
+      xQueueSend(tx_queue, &send, (TickType_t)0);
+    }
+    if (CMP("/clone"))
+    {
+      send = atoi(data.msg);
+      xQueueSend(rx_queue, &send, (TickType_t)0);
+    }
   }
 }
 
@@ -42,7 +53,14 @@ void events_manager(void *params)
     }
   }
 }
-
+void heap_memory_task(void *pvParameter)
+{
+  for (;;)
+  {
+    ESP_LOGI(TAG, "Heap Memory --> %d", esp_get_free_heap_size());
+    vTaskDelay(1000 / portTICK_PERIOD_MS);
+  }
+}
 void app_main(void)
 {
   // Initialize NVS
@@ -56,7 +74,7 @@ void app_main(void)
   // write_nvs_string("test", "vou me embora pra Pasargada");
   size_t str_len;
   char *str = NULL;
-  if (read_nvs_string("test", &str, &str_len) == ESP_OK)
+  if (read_nvs_string("6", &str, &str_len) == ESP_OK)
   {
     printf("\n\nstr:%s - len:%d\n\n", str, str_len);
   }
@@ -64,34 +82,98 @@ void app_main(void)
   {
     printf("deu merda");
   }
-  rmt_item32_t command[3] = {
+  uint32_t length = 0;
+  rmt_item32_t command[] = {
       {
-          .duration0 = 12,
+          .duration0 = 600,
           .level0 = 0,
-          .duration1 = 34,
+          .duration1 = 15000,
           .level1 = 1,
 
       },
       {
-          .duration0 = 67,
+          .duration0 = 600,
           .level0 = 0,
-          .duration1 = 89,
+          .duration1 = 15000,
           .level1 = 1,
 
       },
       {
-          .duration0 = 92,
+          .duration0 = 600,
           .level0 = 0,
-          .duration1 = 319,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
+          .level1 = 1,
+
+      },
+      {
+          .duration0 = 600,
+          .level0 = 0,
+          .duration1 = 15000,
           .level1 = 1,
 
       }};
-  char *json = command_to_json(command, 3);
-  printf("%s", json);
-  rmt_item32_t *commands = NULL;
-  json_to_command(json, &commands);
-
-  printf("\n---%d-%d--\n", commands[1].duration0, commands[1].duration1);
+  char *json = command_to_json(command, 11);
+  write_nvs_string("10", json);
+  // printf("%s", json);
+  // rmt_item32_t *commands = NULL;
+  // json_to_command(json, &commands, &length);
+  // esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(0));
+  // esp_task_wdt_delete(xTaskGetIdleTaskHandleForCPU(1));
+  xTaskCreate(heap_memory_task, "heap_memory_task", 2048, NULL, 6, NULL);
+  // printf("\n---%d-%d--\n", commands[1].duration0, commands[1].duration1);
+  // Receiver  configuration
+  ir_rx_config();
+  // transceiver  configuration
+  ir_tx_config();
   // Wifi initialization
   wifi_init();
 }

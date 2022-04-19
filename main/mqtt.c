@@ -32,13 +32,14 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
   ESP_LOGD(TAG, "Event dispatched from event loop base=%s, event_id=%d", base, event_id);
   esp_mqtt_event_handle_t event = event_data;
   esp_mqtt_client_handle_t client = event->client;
-  int msg_id;
+
   switch ((esp_mqtt_event_id_t)event_id)
   {
   case MQTT_EVENT_CONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_CONNECTED");
     xEventGroupSetBits(global_events, MQTT_CONNECTED_BIT);
-    msg_id = esp_mqtt_client_subscribe(client, "/test", 0);
+    esp_mqtt_client_subscribe(client, "/clone", 0);
+    esp_mqtt_client_subscribe(client, "/send", 0);
     break;
   case MQTT_EVENT_DISCONNECTED:
     ESP_LOGI(TAG, "MQTT_EVENT_DISCONNECTED");
@@ -59,8 +60,10 @@ static void mqtt_event_handler(void *handler_args, esp_event_base_t base, int32_
     ESP_LOGI(TAG, "MQTT_EVENT_DATA");
     printf("TOPIC=%.*s\r\n", event->topic_len, event->topic);
     printf("DATA=%.*s\r\n", event->data_len, event->data);
-    memcpy(data.topic, event->topic, event->topic_len);
-    memcpy(data.msg, event->data, event->data_len);
+    strncpy(data.topic, event->topic, event->topic_len);
+    strncpy(data.msg, event->data, event->data_len);
+    data.topic[event->topic_len] = 0;
+    data.msg[event->data_len] = 0;
     xQueueSend(mqtt_queue, (void *)&data, (TickType_t)0);
     break;
   case MQTT_EVENT_ERROR:
@@ -88,7 +91,7 @@ void mqtt_init(void)
       .password = BROKER_PASS,
       .username = BROKER_USER,
   };
-  esp_mqtt_client_handle_t client = esp_mqtt_client_init(&mqtt_cfg);
+  client = esp_mqtt_client_init(&mqtt_cfg);
   /* The last argument may be used to pass data to the event handler, in this example mqtt_event_handler */
   esp_mqtt_client_register_event(client, ESP_EVENT_ANY_ID, mqtt_event_handler, NULL);
   esp_mqtt_client_start(client);
