@@ -45,7 +45,7 @@ void events_manager(void *params)
     }
     else if ((bits & MQTT_CONNECTED_BIT) == MQTT_CONNECTED_BIT)
     {
-      xTaskCreate(mqtt_rx, "MQTT RECEIVE TASK", 2048, NULL, configMAX_PRIORITIES - 5, NULL);
+      xTaskCreate(mqtt_rx, "MQTT RECEIVE TASK", 2 * 2048, NULL, configMAX_PRIORITIES - 5, NULL);
     }
     else
     {

@@ -1,8 +1,8 @@
 
 #include "wifi.h"
 
-#define WIFI_SSID "GEPAE"
-#define WIFI_PASS "gepaelab"
+#define WIFI_SSID "Rafaela_VisualLink"
+#define WIFI_PASS "87824793"
 #define MAXIMUM_RETRY 5
 
 /* FreeRTOS event group to signal when we are connected*/

@@ -36,6 +36,7 @@ typedef struct
 
 QueueHandle_t mqtt_queue;
 esp_mqtt_client_handle_t client;
+void mqtt_deinit(void);
 void mqtt_init(void);
 
 #endif

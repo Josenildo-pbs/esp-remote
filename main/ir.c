@@ -25,12 +25,12 @@ char *command_to_json(rmt_item32_t *data, uint32_t length)
     cJSON_AddItemToArray(commands, command);
   }
   str = cJSON_Print(obj);
-  cJSON_free(obj);
-  cJSON_free(command);
+  cJSON_Delete(obj);
+  // cJSON_Delete(commands);
   return str;
 }
 
-void json_to_command(char *str, rmt_item32_t **data, uint32_t *length)
+rmt_item32_t *json_to_command(char *str, uint32_t *length)
 {
   cJSON *obj = cJSON_Parse(str);
   cJSON *commands = NULL;
@@ -38,24 +38,23 @@ void json_to_command(char *str, rmt_item32_t **data, uint32_t *length)
   commands = cJSON_GetObjectItemCaseSensitive(obj, "commands");
   *length = cJSON_GetArraySize(commands);
   uint32_t i = 0;
-  *data = (rmt_item32_t *)malloc(sizeof(cJSON_GetArraySize(commands) * sizeof(rmt_item32_t)));
+  rmt_item32_t *data = (rmt_item32_t *)malloc(cJSON_GetArraySize(commands) * sizeof(rmt_item32_t));
   cJSON_ArrayForEach(command, commands)
   {
-    (*data)[i].val = command->valuedouble;
+    (data[i]).val = command->valuedouble;
     i++;
   }
-  cJSON_free(obj);
-  cJSON_free(commands);
-  cJSON_free(command);
+  cJSON_Delete(obj);
+  return data;
 }
 void tx_task(void *params)
 {
-  rmt_item32_t *items = NULL;
   uint32_t length;
   uint8_t data;
   char *str = NULL;
   size_t str_len;
   char key[5];
+  rmt_item32_t *items = NULL;
   // items = (rmt_item32_t *)malloc(length * sizeof(rmt_item32_t));
 
   for (;;)
@@ -66,15 +65,15 @@ void tx_task(void *params)
     if (read_nvs_string(key, &str, &str_len) == ESP_OK)
     {
       ESP_LOGI(TAG, "\n\nstr:%s - len:%d\n\n", str, str_len);
-      json_to_command(str, &items, &length);
+      items = json_to_command(str, &length);
       rmt_write_items(tx_channel, items, length, false);
+      free(items);
     }
     else
     {
       ESP_LOGI(TAG, "String reading failed!");
     }
     free(str);
-    free(items);
   }
 }
 void ir_tx_config()
@@ -89,7 +88,7 @@ void ir_tx_config()
   // transceiver Queue
   tx_queue = xQueueCreate(5, sizeof(uint8_t));
   // transceiver task
-  xTaskCreate(tx_task, "tx task", 10 * 2048, NULL, configMAX_PRIORITIES - 5, NULL);
+  xTaskCreate(tx_task, "tx task", 10 * 2048, NULL, configMAX_PRIORITIES - 10, NULL);
 }
 
 void rx_task(void *params)
@@ -102,7 +101,7 @@ void rx_task(void *params)
   {
     xQueueReceive(rx_queue, &data, portMAX_DELAY);
     // Start receive
-    esp_mqtt_client_stop(client);
+    // esp_mqtt_client_stop(client);
     rmt_rx_start(rx_channel, true);
     items = (rmt_item32_t *)xRingbufferReceive(rb, &length, portMAX_DELAY); // 6000 / portTICK_PERIOD_MS
     for (int i = 0; i < 3; i++)
@@ -113,7 +112,7 @@ void rx_task(void *params)
     write_nvs_string(key, command_to_json(items, length));
     rmt_rx_stop(rx_channel);
     vRingbufferReturnItem(rb, (void *)items);
-    esp_mqtt_client_start(client);
+    // esp_mqtt_client_start(client);
   }
   rmt_driver_uninstall(rx_channel);
   vTaskDelete(NULL);

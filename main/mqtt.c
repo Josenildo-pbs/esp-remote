@@ -97,3 +97,9 @@ void mqtt_init(void)
   esp_mqtt_client_start(client);
   mqtt_queue = xQueueCreate(5, sizeof(mqtt_data_t));
 }
+
+void mqtt_deinit(void)
+{
+  // esp_mqtt_client_stop(client);
+  esp_mqtt_client_destroy(client);
+}

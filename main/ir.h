@@ -22,7 +22,7 @@ QueueHandle_t rx_queue;
 QueueHandle_t tx_queue;
 
 char *command_to_json(rmt_item32_t *data, uint32_t length);
-void json_to_command(char *str, rmt_item32_t **data, uint32_t *length);
+rmt_item32_t *json_to_command(char *str, uint32_t *length);
 void ir_tx_config();
 void ir_rx_config();
 #endif
